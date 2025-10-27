@@ -1,0 +1,143 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define TAM_FILA 5 // tamanho máximo da fila de peças
+
+// Estrutura que representa uma peça de Tetris
+typedef struct {
+    char nome; // tipo da peça: 'I', 'O', 'T', 'L'
+    int id;    // identificador único da peça
+} Peca;
+
+// Estrutura da fila circular
+typedef struct {
+    Peca elementos[TAM_FILA];
+    int frente;
+    int tras;
+    int tamanho;
+} Fila;
+
+// -------------------------------
+// Funções auxiliares da fila
+// -------------------------------
+
+// Inicializa a fila vazia
+void inicializarFila(Fila *f) {
+    f->frente = 0;
+    f->tras = -1;
+    f->tamanho = 0;
+}
+
+// Verifica se a fila está cheia
+int filaCheia(Fila *f) {
+    return f->tamanho == TAM_FILA;
+}
+
+// Verifica se a fila está vazia
+int filaVazia(Fila *f) {
+    return f->tamanho == 0;
+}
+
+// Insere uma nova peça ao final da fila (enqueue)
+void enfileirar(Fila *f, Peca p) {
+    if (filaCheia(f)) {
+        printf("\n⚠️  Fila cheia! Não é possível inserir nova peça.\n");
+        return;
+    }
+    f->tras = (f->tras + 1) % TAM_FILA;
+    f->elementos[f->tras] = p;
+    f->tamanho++;
+}
+
+// Remove a peça da frente da fila (dequeue)
+Peca desenfileirar(Fila *f) {
+    Peca p = {'-', -1};
+    if (filaVazia(f)) {
+        printf("\n⚠️  Fila vazia! Nenhuma peça para jogar.\n");
+        return p;
+    }
+    p = f->elementos[f->frente];
+    f->frente = (f->frente + 1) % TAM_FILA;
+    f->tamanho--;
+    return p;
+}
+
+// Exibe o estado atual da fila
+void exibirFila(Fila *f) {
+    printf("\nFila de peças:\n");
+    if (filaVazia(f)) {
+        printf("(vazia)\n");
+        return;
+    }
+    int i;
+    int indice = f->frente;
+    for (i = 0; i < f->tamanho; i++) {
+        Peca p = f->elementos[indice];
+        printf("[%c %d] ", p.nome, p.id);
+        indice = (indice + 1) % TAM_FILA;
+    }
+    printf("\n");
+}
+
+// -------------------------------
+// Funções para geração de peças
+// -------------------------------
+
+// Gera uma nova peça com tipo aleatório e ID sequencial
+Peca gerarPeca(int id) {
+    char tipos[] = {'I', 'O', 'T', 'L'};
+    Peca nova;
+    nova.nome = tipos[rand() % 4]; // seleciona aleatoriamente uma peça
+    nova.id = id;
+    return nova;
+}
+
+// -------------------------------
+// Função principal (main)
+// -------------------------------
+int main() {
+    Fila fila;
+    inicializarFila(&fila);
+    srand(time(NULL)); // inicializa gerador de números aleatórios
+
+    int idAtual = 0;
+
+    // Inicializa a fila com 5 peças
+    for (int i = 0; i < TAM_FILA; i++) {
+        enfileirar(&fila, gerarPeca(idAtual++));
+    }
+
+    int opcao;
+    do {
+        exibirFila(&fila);
+        printf("\nOpções de ação:\n");
+        printf("1 - Jogar peça (dequeue)\n");
+        printf("2 - Inserir nova peça (enqueue)\n");
+        printf("0 - Sair\n");
+        printf("Escolha: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case 1: {
+                Peca jogada = desenfileirar(&fila);
+                if (jogada.id != -1)
+                    printf("\n🎮 Peça jogada: [%c %d]\n", jogada.nome, jogada.id);
+                break;
+            }
+            case 2: {
+                Peca nova = gerarPeca(idAtual++);
+                enfileirar(&fila, nova);
+                break;
+            }
+            case 0:
+                printf("\n👋 Encerrando o jogo. Até mais!\n");
+                break;
+            default:
+                printf("\n⚠️  Opção inválida! Tente novamente.\n");
+        }
+
+    } while (opcao != 0);
+
+    return 0;
+}
